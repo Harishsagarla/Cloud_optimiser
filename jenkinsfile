@@ -1,0 +1,27 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'pip install pandas matplotlib'
+            }
+        }
+
+        stage('Run Python Script') {
+            steps {
+                sh 'python3 main.py'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '🎉 Jenkins Pipeline Success!'
+        }
+        failure {
+            echo '❌ Jenkins Pipeline Failed!'
+        }
+    }
+}
