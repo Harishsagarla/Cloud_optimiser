@@ -1,27 +1,53 @@
 pipeline {
-    agent any
+    pipeline {
+        agent any
 
-    stages {
+        stages {
+            stage('Setup Python & Install Dependencies') {
+                steps {
+                    script {
+                        if (isUnix()) {
+                            sh '''#!/bin/bash
+    set -e
+    python3 --version || python --version
+    python3 -m venv venv || python -m venv venv
+    . venv/bin/activate
+    pip install --upgrade pip
+    pip install -r requirements.txt
+    '''
+                        } else {
+                            bat '''
+    python --version
+    python -m venv venv
+    call venv\\Scripts\\activate
+    pip install --upgrade pip
+    pip install -r requirements.txt
+    '''
+                        }
+                    }
+                }
+            }
 
-        stage('Install Dependencies') {
-            steps {
-                sh 'pip install pandas matplotlib'
+            stage('Run Python Script') {
+                steps {
+                    script {
+                        if (isUnix()) {
+                            sh '. venv/bin/activate && python main.py'
+                        } else {
+                            bat 'call venv\\Scripts\\activate && python main.py'
+                        }
+                    }
+                }
             }
         }
 
-        stage('Run Python Script') {
-            steps {
-                sh 'python3 main.py'
+        post {
+            success {
+                archiveArtifacts artifacts: 'performance_chart.png', fingerprint: true
+                echo '🎉 Jenkins Pipeline Success!'
+            }
+            failure {
+                echo '❌ Jenkins Pipeline Failed!'
             }
         }
     }
-
-    post {
-        success {
-            echo '🎉 Jenkins Pipeline Success!'
-        }
-        failure {
-            echo '❌ Jenkins Pipeline Failed!'
-        }
-    }
-}
